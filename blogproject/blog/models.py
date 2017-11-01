@@ -1,4 +1,8 @@
 from django.db import models
+from django.contrib.auth.models import User
+# 让解释器显示__str__方法返回的内容 如果使用python3 则不需要这个装饰器也可以运行
+# 如果使用python2 但又不想使用这个装饰器,那么就把__str__ 改写成 __unicode__
+from django.utils.six import python_2_unicode_compatible
 
 # Create your models here.
 
@@ -12,12 +16,16 @@ class Category(models.Model):
         Django 内置的全部类型可查看文档：
         https://docs.djangoproject.com/en/1.10/ref/models/fields/#field-types
     """
+    def __str__(self):
+        return self.name
     name = models.CharField(max_length=100)
 
 class Tag(models.Model):
     """
     标签 Tag
     """
+    def __str__(self):
+        return self.name
     name = models.CharField(max_length=100)
 
 class Post(models.Model):
@@ -25,6 +33,8 @@ class Post(models.Model):
     文章
     """
     # 文章标题
+    def __str__(self):
+        return self.title
     title = models.CharField(max_length=100)
 
     # 文章正文.使用 TextField
