@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.urls import reverse
 # 让解释器显示__str__方法返回的内容 如果使用python3 则不需要这个装饰器也可以运行
 # 如果使用python2 但又不想使用这个装饰器,那么就把__str__ 改写成 __unicode__
 from django.utils.six import python_2_unicode_compatible
@@ -61,3 +62,8 @@ class Post(models.Model):
     # 这里我们通过 ForeignKey 把文章和 User 关联了起来。
     # 因为我们规定一篇文章只能有一个作者，而一个作者可能会写多篇文章，因此这是一对多的关联关系，和 Category 类似。
     author = models.ForeignKey(User)
+
+    # 自定义 get_absolute_url 方法
+    # 记得从 django.urls 中导入 reverse 函数
+    def get_absolute_url(self):
+        return reverse('blog:detail', kwargs={'pk': self.pk})
