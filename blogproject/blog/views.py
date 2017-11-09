@@ -20,6 +20,9 @@ def index(request):
 # 添加markdown修改
 def detail(request, pk):
     post = get_object_or_404(Post, pk=pk)
+    # 阅读量 + 1
+    post.increase_views()
+
     # markdown模块
     # 其中额外添加了extensions参数 这是对markdown语法的拓展,
     # 这里添加了三个
