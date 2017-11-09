@@ -3,6 +3,7 @@ from .models import Post, Category
 from django.shortcuts import render, get_object_or_404
 from comments.forms import CommentForm
 import markdown
+from django.views.generic import ListView # 类视图
 # Create your views here.
 
 def index(request):
@@ -58,3 +59,18 @@ def category(request, pk):
     cate = get_object_or_404(Category, pk=pk)
     post_list = Post.objects.filter(category=cate).order_by('-created_time')
     return render(request, 'blog/index.html', context={'post_list': post_list})
+
+# 类视图
+class IndexView(ListView):
+    model = Post
+    template_name = 'blog/index.html'
+    context_object_name = 'post_list'
+
+class CategoryView(ListView):
+    model = Post
+    template_name = 'blog/index.html'
+    context_object_name = 'post_list'
+
+    def get_queryset(self):
+        cate = get_object_or_404(Category, pk=self.kwargs.get('pk'))
+        return super(CategoryView, self).get_queryset().filter(category=cate)
