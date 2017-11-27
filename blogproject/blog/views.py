@@ -1,9 +1,10 @@
 from django.http import HttpResponse
-from .models import Post, Category
+from .models import Post, Category, Tag
 from django.shortcuts import render, get_object_or_404
 from comments.forms import CommentForm
 import markdown
 from django.views.generic import ListView, DetailView # 类视图
+from django.db.models import Q # 搜索
 # Create your views here.
 
 def index(request):
@@ -240,15 +241,27 @@ class PostDetailView(DetailView):
         # 视图必须返回一个 HttpResponse 对象
         return response
 
+    # def get_object(self, queryset=None):
+    #     # 覆写 get_object 方法的目的是因为需要对 post 的 body 值进行渲染
+    #     post = super(PostDetailView, self).get_object(queryset=None)
+    #     post.body = markdown.markdown(post.body,
+    #                                   extensions=[
+    #                                       'markdown.extensions.extra',
+    #                                       'markdown.extensions.codehilite',
+    #                                       'markdown.extensions.toc',
+    #                                   ])
+    #     return post
+
     def get_object(self, queryset=None):
-        # 覆写 get_object 方法的目的是因为需要对 post 的 body 值进行渲染
         post = super(PostDetailView, self).get_object(queryset=None)
-        post.body = markdown.markdown(post.body,
-                                      extensions=[
-                                          'markdown.extensions.extra',
-                                          'markdown.extensions.codehilite',
-                                          'markdown.extensions.toc',
-                                      ])
+        # 覆写 get_object 方法的目的是因为需要对 post 的 body 值进行渲染
+        md = markdown.Markdown(extensions=[
+            'markdown.extensions.extra',
+            'markdown.extensions.codehilite',
+            'markdown.extensions.toc',
+        ])
+        post.body = md.convert(post.body)
+        post.toc = md.toc
         return post
 
     def get_context_data(self, **kwargs):
@@ -262,3 +275,24 @@ class PostDetailView(DetailView):
             'comment_list': comment_list
         })
         return context
+
+class TagView(ListView):
+    model = Post
+    template_name = 'blog/index.html'
+    context_object_name = 'post_list'
+
+    def get_queryset(self):
+        tag = get_object_or_404(Tag, pk=self.kwargs.get('pk'))
+        return super(TagView, self).get_queryset().filter(tags=tag)
+
+def search(request):
+    q = request.GET.get('q')
+    error_msg = ''
+
+    if not q:
+        error_msg = "请输入关键词"
+        return render(request, 'blog/index.html', {'error_msg': error_msg})
+
+    post_list = Post.objects.filter(Q(title__icontains=q) | Q(body__icontains=q))
+    return render(request, 'blog/index.html', {'error_msg': error_msg,
+                                               'post_list': post_list})
